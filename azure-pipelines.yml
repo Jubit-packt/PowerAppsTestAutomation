@@ -1,44 +1,53 @@
 # File: azure-pipelines.yml
+# Build Name / Format
+name: PowerAppsTestAutomation-$(date:yyyyMMdd)$(rev:.r)
+
+resources:
+  repositories:
+    - repository: PowerAppsTestAutomation
+      type: github
+      # GitHub Repo(e.g. <FORK>/PowerAppsTestAutomation)
+      # Recommended to Fork or Duplicate if custom auth flows are required
+      name: CesarCalvoCobo/PowerAppsTestAutomation
+      ref: master
+      # Name of the GitHub OAuth ADO Service Connection
+      endpoint: GitHubCCC
+
+parameters:
+ - name: image
+   displayName: Pool Image
+   type: string
+   # See https://github.com/MicrosoftDocs/azure-devops-docs/blob/master/docs/pipelines/agents/hosted.md#use-a-microsoft-hosted-agent for more pool types
+   default: windows-latest
+   values:
+   - windows-latest
+   - vs2017-win2016
+   - windows-2019
+ - name: BrowserType
+   displayName: Browser Type
+   type: string
+   default: All
+   values:
+   - Chrome
+   - Firefox
+   - All
+ - name: LoginMethod
+   displayName: Login Type # See: https://docs.microsoft.com/en-us/office365/servicedescriptions/office-365-platform-service-description/user-account-management
+   type: string
+   default: CloudIdentity
+   values:
+   - CloudIdentity # Uses the default Office 365 Sign-In Service for authentication
+   - FederatedIdentity # Uses a Custom Login Action method using AD FS 2.0 or other Security Token Services for authentication. Custom code is required.
+   - PassThrough # Federated login scenario where the provided user credential is automatically logged in, requires special agent configurations
 
 jobs:
-- job: BuildAndTest
+- job: "PowerAppsTestFrameworkAutomation"
   pool:
     vmImage: ${{ parameters.image }}
-  steps:
-  - task: NuGetCommand@2
-    inputs:
-      command: 'restore'
-      restoreSolution: 'PowerAppsTestAutomation.sln'
-      feedsToUse: 'select'
-
-  - task: VSTest@2
-    inputs:
-      testSelector: 'testAssemblies'
-      testAssemblyVer2: '**\Microsoft.PowerApps.TestAutomation.Tests\bin\Debug\Microsoft.PowerApps.TestAutomation.Tests.dll'
-      searchFolder: '$(System.DefaultWorkingDirectory)'
-      testFiltercriteria: 'TestCategory=PowerAppsTestAutomation'
-      uiTests: true
-      runSettingsFile: 'Microsoft.PowerApps.TestAutomation.Tests/patestautomation.runsettings'
-      overrideTestrunParameters: |
-        -OnlineUsername "$(OnlineUsername)" -OnlinePassword "$(OnlinePassword)" -BrowserType "$(BrowserTypeChrome)" -OnlineUrl "$(OnlineUrl)"
-        -UsePrivateMode "$(UsePrivateMode)" -TestAutomationURLFilePath "$(TestAutomationURLFilePath)"
-        -DriversPath "$(ChromeWebDriver)"
-
-  - script: echo 'This is a script step.'
-    displayName: 'Script Step'
-
-  - script: echo 'Another script step.'
-    displayName: 'Another Script Step'
-
-- job: CloneRepo
-  steps:
-  - checkout: self
-  - checkout: PowerAppsTestAutomation
-
-- job: PowerAppsTestFrameworkAutomation
-  dependsOn: BuildAndTest
-  pool:
-    vmImage: ${{ parameters.image }}
+    demands:
+    - msbuild
+    - visualstudio
+    - vstest
   variables:
   - name: PortalUrl
     value: https://make.powerapps.com/
@@ -46,7 +55,7 @@ jobs:
   - name: PrivateMode
     value: true
     # FileName where TestAutomationURLs are stored in JSON format
-  - name: TestUrlFileName
+  - name: TestUrlFileName 
     value: TestURLs.json
     # Project name of repo containing TestAutomationURLs (spaces should be encoded as %20)
     # Example: Contoso Test Framework --> Contoso%20Test%20Framework
@@ -54,5 +63,16 @@ jobs:
     value: PowerAppsTestAutomation
 
   steps:
-  - script: echo 'This is a script step in PowerAppsTestFrameworkAutomation job.'
-    displayName: 'Script Step in PowerAppsTestFrameworkAutomation Job'
+  - checkout: self
+  - checkout: PowerAppsTestAutomation
+  #- template: localsteps.yml # Provide optional local YAML template here
+  - template: Samples/azure-pipelines.yml
+    parameters:
+      OnlineUsername: $(OnlineUsername)
+      OnlinePassword: $(OnlinePassword)
+      OnlineUrl: $(PortalUrl)
+      BrowserType: ${{ parameters.BrowserType }}
+      # File location format is /s/TeamProjectName/FilePathToTestAutomationURLs.json
+      TestAutomationURLFilePath: $(Build.SourcesDirectory)\$(LocalProjectName)\$(TestUrlFileName)
+      UsePrivateMode: $(PrivateMode)
+      LoginMethod: ${{ parameters.LoginMethod }}
