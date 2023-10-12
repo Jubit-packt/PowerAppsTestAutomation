@@ -19,7 +19,7 @@
       -UsePrivateMode "$(UsePrivateMode)" -TestAutomationURLFilePath "$(TestAutomationURLFilePath)" 
       -DriversPath "$(ChromeWebDriver)"
 
-resources:
+- resources:
   repositories:
     - repository: PowerAppsTestAutomation
       type: github
@@ -30,7 +30,7 @@ resources:
       # Name of the GitHub OAuth ADO Service Connection
       endpoint: GitHubCCC
 
-parameters:
+- parameters:
  - name: image
    displayName: Pool Image
    type: string
