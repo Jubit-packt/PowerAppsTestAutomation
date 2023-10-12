@@ -1,6 +1,25 @@
 # File: azure-pipelines.yml
+- task: NuGetCommand@2
+  inputs:
+    command: 'restore'
+    restoreSolution: 'PowerAppsTestAutomation.sln'
+    feedsToUse: 'select'
+
 # Build Name / Format
-name: PowerAppsTestAutomation-$(date:yyyyMMdd)$(rev:.r)
+- task: VSTest@3
+  inputs:
+    testSelector: 'testAssemblies'
+    testAssemblyVer2: '**\Microsoft.PowerApps.TestAutomation.Tests\bin\Debug\Microsoft.PowerApps.TestAutomation.Tests.dll'
+    searchFolder: '$(System.DefaultWorkingDirectory)'
+    testFiltercriteria: 'TestCategory=PowerAppsTestAutomation'
+    uiTests: true
+    runSettingsFile: 'Microsoft.PowerApps.TestAutomation.Tests/patestautomation.runsettings'
+    overrideTestrunParameters: |
+      -OnlineUsername "$(OnlineUsername)" -OnlinePassword "$(OnlinePassword)" -BrowserType "$(BrowserTypeChrome)" -OnlineUrl "$(OnlineUrl)" -
+      UsePrivateMode "$(UsePrivateMode)" -
+      TestAutomationURLFilePath
+      "$(TestAutomationURLFilePath)" -DriversPath
+      "$(ChromeWebDriver)"
 
 resources:
   repositories:
