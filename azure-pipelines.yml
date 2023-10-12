@@ -15,11 +15,9 @@
     uiTests: true
     runSettingsFile: 'Microsoft.PowerApps.TestAutomation.Tests/patestautomation.runsettings'
     overrideTestrunParameters: |
-      -OnlineUsername "$(OnlineUsername)" -OnlinePassword "$(OnlinePassword)" -BrowserType "$(BrowserTypeChrome)" -OnlineUrl "$(OnlineUrl)" -
-      UsePrivateMode "$(UsePrivateMode)" -
-      TestAutomationURLFilePath
-      "$(TestAutomationURLFilePath)" -DriversPath
-      "$(ChromeWebDriver)"
+      -OnlineUsername "$(OnlineUsername)" -OnlinePassword "$(OnlinePassword)" -BrowserType "$(BrowserTypeChrome)" -OnlineUrl "$(OnlineUrl)" 
+      -UsePrivateMode "$(UsePrivateMode)" -TestAutomationURLFilePath "$(TestAutomationURLFilePath)" 
+      -DriversPath "$(ChromeWebDriver)"
 
 resources:
   repositories:
